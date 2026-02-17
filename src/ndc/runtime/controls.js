@@ -1,21 +1,20 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-export function createOrbitControls(runtime) {
-  const controls = new OrbitControls(runtime.camera, runtime.renderer.domElement);
+export function createControls(camera, canvas) {
+  const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
+  controls.dampingFactor = 0.06;
+  controls.enablePan = true;
+  controls.maxPolarAngle = Math.PI * 0.485;
+  controls.minDistance = 8;
+  controls.maxDistance = 95;
+  controls.target.set(0, 6, 0);
 
-  controls.target.set(0, 0.7, 0);
-  controls.update();
+  function recenter() {
+    controls.target.set(0, 6, 0);
+    camera.position.set(26, 22, 26);
+    controls.update();
+  }
 
-  controls.minDistance = 2.0;
-  controls.maxDistance = 20.0;
-  controls.maxPolarAngle = Math.PI * 0.49;
-
-  // Slightly nicer feel
-  controls.rotateSpeed = 0.65;
-  controls.zoomSpeed = 0.85;
-  controls.panSpeed = 0.85;
-
-  return controls;
+  return { controls, recenter };
 }
