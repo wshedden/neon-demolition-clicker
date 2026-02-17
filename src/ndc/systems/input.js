@@ -2,11 +2,15 @@ import * as THREE from "three";
 import { GAME_CONFIG } from "../config.js";
 
 const _ndc = new THREE.Vector2();
+const _centerNdc = new THREE.Vector2(0, 0);
+const _launchOrigin = new THREE.Vector3();
 
-export function createInputSystem({ canvas, camera, city, upgrades, fx, holdEnabledRef }) {
+export function createInputSystem({ canvas, camera, projectile, holdEnabledRef }) {
   const raycaster = new THREE.Raycaster();
   const pointerDown = { x: 0, y: 0, t: 0, moved: false, leftHeld: false };
   let holdAccumulator = 0;
+  let spaceHeld = false;
+  let spaceAccumulator = 0;
 
   function setNdcFromEvent(e) {
     const rect = canvas.getBoundingClientRect();
@@ -14,26 +18,26 @@ export function createInputSystem({ canvas, camera, city, upgrades, fx, holdEnab
     _ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   }
 
+  function launchFromRay(raycasterObj, isDrone = false) {
+    _launchOrigin.copy(raycasterObj.ray.origin).addScaledVector(raycasterObj.ray.direction, 1.2);
+    projectile.spawn({
+      origin: _launchOrigin,
+      direction: raycasterObj.ray.direction,
+      speed: isDrone ? 44 : 36,
+      isDrone,
+    });
+  }
+
   function fireFromEvent(e, isDrone = false) {
     setNdcFromEvent(e);
     raycaster.setFromCamera(_ndc, camera);
-    return fireRay(raycaster, isDrone);
+    launchFromRay(raycaster, isDrone);
+    return 0;
   }
 
   function fireRay(raycasterObj, isDrone = false) {
-    const meshes = city.getDamageableMeshes();
-    const hits = raycasterObj.intersectObjects(meshes, false);
-    if (!hits.length) return 0;
-    const hit = hits[0];
-    const building = hit.object.userData.building;
-    if (!building || !building.aliveCount) return 0;
-    const eff = upgrades.effects();
-    const reward = building.applyDamageAOE(hit.instanceId ?? 0, hit.point, eff.damage, eff.radius, eff);
-    if (reward > 0) {
-      fx.spawnImpact(hit.point, eff.radius, isDrone);
-      if (isDrone) fx.spawnDroneFlash(hit.point);
-    }
-    return reward;
+    launchFromRay(raycasterObj, isDrone);
+    return 0;
   }
 
   function onPointerDown(e) {
@@ -56,7 +60,7 @@ export function createInputSystem({ canvas, camera, city, upgrades, fx, holdEnab
   }
 
   function onPointerUp(e) {
-    if (e.button !== 0) return;
+    if (e.button !== 0) return 0;
     const duration = performance.now() - pointerDown.t;
     const dx = e.clientX - pointerDown.x;
     const dy = e.clientY - pointerDown.y;
@@ -67,21 +71,46 @@ export function createInputSystem({ canvas, camera, city, upgrades, fx, holdEnab
     return 0;
   }
 
+  function onKeyDown(e) {
+    if (e.code !== "Space") return;
+    e.preventDefault();
+    if (!spaceHeld) spaceAccumulator = 0;
+    spaceHeld = true;
+  }
+
+  function onKeyUp(e) {
+    if (e.code !== "Space") return;
+    e.preventDefault();
+    spaceHeld = false;
+  }
+
   function update(dt, lastPointerEvent) {
-    if (!pointerDown.leftHeld || !holdEnabledRef()) return 0;
-    if (pointerDown.moved || !lastPointerEvent) return 0;
-    holdAccumulator += dt;
-    const fireStep = 1 / GAME_CONFIG.holdShotsPerSecond;
-    let reward = 0;
-    while (holdAccumulator >= fireStep) {
-      holdAccumulator -= fireStep;
-      reward += fireFromEvent(lastPointerEvent, false);
+    if (pointerDown.leftHeld && holdEnabledRef() && !pointerDown.moved && lastPointerEvent) {
+      holdAccumulator += dt;
+      const fireStep = 1 / GAME_CONFIG.holdShotsPerSecond;
+      while (holdAccumulator >= fireStep) {
+        holdAccumulator -= fireStep;
+        fireFromEvent(lastPointerEvent, false);
+      }
     }
-    return reward;
+
+    if (spaceHeld) {
+      const fireStep = 1 / GAME_CONFIG.holdShotsPerSecond;
+      spaceAccumulator += dt;
+      while (spaceAccumulator >= fireStep) {
+        spaceAccumulator -= fireStep;
+        raycaster.setFromCamera(_centerNdc, camera);
+        launchFromRay(raycaster, false);
+      }
+    }
+
+    return 0;
   }
 
   canvas.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("pointermove", onPointerMove);
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
 
   return {
     onPointerUp,
@@ -90,6 +119,8 @@ export function createInputSystem({ canvas, camera, city, upgrades, fx, holdEnab
     dispose() {
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
     },
   };
 }
