@@ -11,6 +11,7 @@ import { createInputSystem } from "./systems/input.js";
 import { createCity } from "./world/city.js";
 import { createDebrisSystem } from "./world/debris.js";
 import { createFxSystem } from "./world/fx.js";
+import { createProjectileSystem } from "./world/projectiles.js";
 import { createUI } from "./ui/ui.js";
 
 const _droneRay = new THREE.Raycaster();
@@ -29,11 +30,12 @@ export function startNDC({ canvasId, uiRoot }) {
 
   const debris = createDebrisSystem(sceneRt.scene, PERF_MODES[saved.perfMode].debrisMax);
   const fx = createFxSystem(sceneRt.scene, sceneRt.camera);
+  const projectile = createProjectileSystem(sceneRt.scene);
   const city = createCity({ scene: sceneRt.scene, perfConfig: PERF_MODES[saved.perfMode], economy, upgrades, debris });
   const perf = createPerfSystem(saved.perfMode, sceneRt, city);
 
   const holdState = { enabled: saved.holdToFire, lastPointerEvent: null };
-  const input = createInputSystem({ canvas, camera: sceneRt.camera, city, upgrades, fx, holdEnabledRef: () => holdState.enabled });
+  const input = createInputSystem({ canvas, camera: sceneRt.camera, projectile, holdEnabledRef: () => holdState.enabled });
 
   canvas.addEventListener("pointerup", (e) => {
     economy.addScrap(input.onPointerUp(e));
@@ -100,6 +102,12 @@ export function startNDC({ canvasId, uiRoot }) {
   const loop = createLoop((dt) => {
     controls.update();
     economy.addScrap(input.update(dt, holdState.lastPointerEvent));
+    projectile.update(dt, {
+      city,
+      upgrades,
+      fx,
+      onReward: (value) => economy.addScrap(value),
+    });
 
     const eff = upgrades.effects();
     if (eff.droneLevel > 0) {

@@ -8,7 +8,7 @@ export const PERF_MODES = {
     debrisMax: 250,
     collapseBatch: 260,
     targetBlocks: 4200,
-    cityGrid: 3,
+    cityGrid: 1,
     spacing: 20,
   },
   high: {
@@ -18,16 +18,16 @@ export const PERF_MODES = {
     debrisMax: 600,
     collapseBatch: 520,
     targetBlocks: 12000,
-    cityGrid: 4,
+    cityGrid: 1,
     spacing: 18,
   },
 };
 
 export const GAME_CONFIG = {
-  bg: 0x000000,
-  fogColor: 0x05070d,
-  fogNear: 45,
-  fogFar: 200,
+  bg: 0x02040a,
+  fogColor: 0x0c1322,
+  fogNear: 100,
+  fogFar: 280,
   maxDt: 0.05,
   clickMoveThreshold: 6,
   clickTimeThresholdMs: 250,

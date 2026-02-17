@@ -10,6 +10,7 @@ export function createUI(root, upgrades) {
     <div id="hudScrap"></div>
     <div id="hudSps"></div>
     <div id="hudTool"></div>
+    <small class="muted" id="hudControls"></small>
     <small class="muted" id="hudPerf"></small>
   `;
 
@@ -59,6 +60,7 @@ export function createUI(root, upgrades) {
     hud.querySelector("#hudScrap").textContent = `Scrap: ${formatNumber(state.scrap)}`;
     hud.querySelector("#hudSps").textContent = `Scrap/sec est: ${formatNumber(state.sps)}`;
     hud.querySelector("#hudTool").textContent = `Damage ${state.damage.toFixed(2)} | Radius ${state.radius.toFixed(2)} | x${state.mult.toFixed(2)}`;
+    hud.querySelector("#hudControls").textContent = "Shoot: Hold [Space] (or click).";
     hud.querySelector("#hudPerf").textContent = `Perf: ${state.perfLabel} | Blocks: ${state.blocks} | Debris: ${state.debris}`;
 
     for (const [id, el] of Object.entries(upgradeEls)) {

@@ -5,26 +5,18 @@ export function createCity({ scene, perfConfig, economy, upgrades, debris }) {
   const buildings = [];
   const sharedGeometry = new THREE.BoxGeometry(0.96, 0.96, 0.96);
   const material = new THREE.MeshStandardMaterial({
-    color: 0x2ad6ff,
-    emissive: 0x0b1f35,
-    emissiveIntensity: 0.6,
-    roughness: 0.38,
-    metalness: 0.15,
+    color: 0x7cf5ff,
+    emissive: 0x11407a,
+    emissiveIntensity: 0.95,
+    roughness: 0.24,
+    metalness: 0.2,
     vertexColors: true,
   });
 
   let totalBlocks = 0;
 
-  function generatePlots(mode) {
-    const plots = [];
-    const grid = mode.cityGrid;
-    const half = (grid - 1) * 0.5;
-    for (let x = 0; x < grid; x += 1) {
-      for (let z = 0; z < grid; z += 1) {
-        plots.push(new THREE.Vector3((x - half) * mode.spacing, 0, (z - half) * mode.spacing));
-      }
-    }
-    return plots;
+  function generatePlots() {
+    return [new THREE.Vector3(0, 0, 0)];
   }
 
   function clear() {
@@ -35,13 +27,13 @@ export function createCity({ scene, perfConfig, economy, upgrades, debris }) {
 
   function rebuildForPerf(mode) {
     clear();
-    const plots = generatePlots(mode);
-    const per = Math.max(350, Math.floor(mode.targetBlocks / plots.length));
+    const plots = generatePlots();
+    const per = Math.max(550, Math.floor(mode.targetBlocks));
 
     for (let i = 0; i < plots.length; i += 1) {
-      const w = 4 + (i % 4);
-      const d = 4 + ((i * 3) % 4);
-      const h = Math.max(6, Math.floor(per / (w * d)));
+      const w = 8;
+      const d = 8;
+      const h = Math.max(12, Math.floor(per / (w * d)));
       const b = createBuilding({
         scene,
         sharedGeometry,

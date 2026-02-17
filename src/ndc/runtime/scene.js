@@ -13,22 +13,22 @@ export function createSceneRuntime(canvas, perfMode) {
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
   camera.position.set(26, 22, 26);
 
-  const ambient = new THREE.AmbientLight(0x88aaff, 0.42);
-  const dir = new THREE.DirectionalLight(0x9ce8ff, 0.95);
+  const ambient = new THREE.AmbientLight(0xaac8ff, 0.6);
+  const dir = new THREE.DirectionalLight(0xb5f4ff, 1.15);
   dir.position.set(30, 40, 15);
   scene.add(ambient, dir);
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(260, 260),
-    new THREE.MeshStandardMaterial({ color: 0x020204, roughness: 1, metalness: 0 })
+    new THREE.MeshStandardMaterial({ color: 0x060910, roughness: 1, metalness: 0 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.02;
   ground.receiveShadow = false;
 
-  const grid = new THREE.GridHelper(260, 72, 0x1be3ff, 0x073c5f);
+  const grid = new THREE.GridHelper(260, 72, 0x56f2ff, 0x0f4f70);
   grid.position.y = 0.01;
-  grid.material.opacity = 0.26;
+  grid.material.opacity = 0.36;
   grid.material.transparent = true;
 
   scene.add(ground, grid);
