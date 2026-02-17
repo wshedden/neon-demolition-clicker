@@ -1,70 +1,69 @@
 import * as THREE from "three";
+import { GAME_CONFIG, PERF_MODES } from "../config.js";
 
-export function createSceneRuntime({ canvas }) {
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: true,
-    alpha: false,
-    powerPreference: "high-performance",
-  });
-
-  renderer.setClearColor(0x000000, 1);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+export function createSceneRuntime(canvas, perfMode) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
+  renderer.setClearColor(GAME_CONFIG.bg, 1);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 8, 35);
+  scene.background = new THREE.Color(GAME_CONFIG.bg);
+  scene.fog = new THREE.Fog(GAME_CONFIG.fogColor, GAME_CONFIG.fogNear, GAME_CONFIG.fogFar);
 
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.05, 200);
-  camera.position.set(4.2, 3.0, 5.4);
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 500);
+  camera.position.set(26, 22, 26);
 
-  // Lights
-  scene.add(new THREE.AmbientLight(0x88aaff, 0.25));
+  const ambient = new THREE.AmbientLight(0x88aaff, 0.42);
+  const dir = new THREE.DirectionalLight(0x9ce8ff, 0.95);
+  dir.position.set(30, 40, 15);
+  scene.add(ambient, dir);
 
-  const key = new THREE.DirectionalLight(0xffffff, 1.15);
-  key.position.set(6, 10, 4);
-  scene.add(key);
-
-  const fill = new THREE.DirectionalLight(0xff55ff, 0.35);
-  fill.position.set(-6, 3, -5);
-  scene.add(fill);
-
-  // Ground
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshStandardMaterial({
-      color: 0x020208,
-      roughness: 1.0,
-      metalness: 0.0,
-    })
+    new THREE.PlaneGeometry(260, 260),
+    new THREE.MeshStandardMaterial({ color: 0x020204, roughness: 1, metalness: 0 })
   );
   ground.rotation.x = -Math.PI / 2;
-  ground.position.y = 0;
-  scene.add(ground);
+  ground.position.y = -0.02;
+  ground.receiveShadow = false;
 
-  // Faint neon grid
-  const grid = new THREE.GridHelper(40, 40, 0x00d5ff, 0xff3df2);
-  grid.position.y = 0.001;
-  grid.material.opacity = 0.18;
+  const grid = new THREE.GridHelper(260, 72, 0x1be3ff, 0x073c5f);
+  grid.position.y = 0.01;
+  grid.material.opacity = 0.26;
   grid.material.transparent = true;
-  scene.add(grid);
 
-  const clock = new THREE.Clock();
+  scene.add(ground, grid);
+
+  function applyPerfMode(modeKey) {
+    const mode = PERF_MODES[modeKey] || PERF_MODES.high;
+    renderer.setPixelRatio(mode.pixelRatio);
+    resize();
+  }
 
   function resize() {
-    const w = canvas.clientWidth || window.innerWidth;
-    const h = canvas.clientHeight || window.innerHeight;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
 
-  window.addEventListener("resize", resize, { passive: true });
-  resize();
-
   function dispose() {
-    window.removeEventListener("resize", resize);
+    ground.geometry.dispose();
+    ground.material.dispose();
+    grid.geometry.dispose();
+    grid.material.dispose();
     renderer.dispose();
   }
 
-  return { renderer, scene, camera, clock, dispose };
+  window.addEventListener("resize", resize);
+  applyPerfMode(perfMode);
+
+  return {
+    renderer,
+    scene,
+    camera,
+    resize,
+    applyPerfMode,
+    dispose,
+  };
 }
